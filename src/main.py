@@ -1,6 +1,21 @@
 from textnode import *
 from htmlnode import *
 
+def split_nodes_delimiter(old_nodes:list[TextNode], delimiter, text_type:TextType):
+    out = []
+    for node in old_nodes:
+        if node.text_type is not TextType.TEXT:
+            out.append(node)
+            continue
+        lines = node.text.split(delimiter)
+        if len(lines) % 2 == 0:
+            raise ValueError("Invalid text: Uneven number of delimiters")
+        for i in range(len(lines)):
+            new_type = TextType.TEXT if i % 2 == 0 else text_type
+            out.append(TextNode(lines[i], new_type))
+    return out       
+
+
 def text_node_to_html_node(text_node):
     match text_node.text_type:
         case TextType.TEXT: return LeafNode(None, text_node.text)
