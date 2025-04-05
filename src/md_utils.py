@@ -16,7 +16,6 @@ def split_nodes_delimiter(old_nodes:list[TextNode], delimiter, text_type:TextTyp
             out.append(TextNode(lines[i], new_type))
     return out       
 
-
 def text_node_to_html_node(text_node):
     match text_node.text_type:
         case TextType.TEXT: return LeafNode(None, text_node.text)
@@ -75,7 +74,6 @@ def split_nodes_link(old_nodes:list[TextNode]):
             out.append(TextNode(text, TextType.TEXT))
     return out
 
-
 def text_to_textnodes(text):
     nodes = TextNode(text, TextType.TEXT)
     nodes = split_nodes_delimiter([nodes], "**", TextType.BOLD)
@@ -84,3 +82,12 @@ def text_to_textnodes(text):
     nodes = split_nodes_image(nodes)
     nodes = split_nodes_link(nodes)
     return nodes
+
+def markdown_to_blocks(markdown):
+    blocks = markdown.split("\n\n")
+    out = []
+    for block in blocks:
+        if not block:
+            continue
+        out.append(block.strip())
+    return out
