@@ -1,12 +1,20 @@
 from enum import Enum
 
+class BlockType(Enum):
+    PARAGRAPH       = "paragraph"
+    HEADING         = "heading"
+    CODE            = "code"
+    QUOTE           = "quote"
+    UNORDERED_LIST  = "unordered_list"
+    ORDERED_LIST    = "ordered_list"
+
 class TextType(Enum):
-    BOLD = "bold"
+    BOLD   = "bold"
     ITALIC = "italic"
-    CODE = "code"
-    LINK = "link"
-    IMAGE = "image"
-    TEXT = "text"
+    CODE   = "code"
+    LINK   = "link"
+    IMAGE  = "image"
+    TEXT   = "text"
 
 class TextNode():
     def __init__(self, text, text_type, url=None):

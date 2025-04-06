@@ -12,6 +12,8 @@ def split_nodes_delimiter(old_nodes:list[TextNode], delimiter, text_type:TextTyp
         if len(lines) % 2 == 0:
             raise ValueError("Invalid text: Uneven number of delimiters")
         for i in range(len(lines)):
+            if lines[i] == "":
+                continue
             new_type = TextType.TEXT if i % 2 == 0 else text_type
             out.append(TextNode(lines[i], new_type))
     return out       
@@ -91,3 +93,85 @@ def markdown_to_blocks(markdown):
             continue
         out.append(block.strip())
     return out
+
+def block_to_block_type(block):
+    if re.findall(r"^#{1,6}\s", block):
+        return BlockType.HEADING
+    if re.findall(r"^```[\s\S]*```$", block):
+        return BlockType.CODE
+    if re.findall(r"^>", block):
+        for line in block.split("\n"):
+            if not re.findall(r"^>", line):
+                return BlockType.PARAGRAPH
+        return BlockType.QUOTE
+    if len(re.findall(r"^-\s", block)):
+        for line in block.split("\n"):
+            if not re.findall(r"^-\s", line):
+                return BlockType.PARAGRAPH
+        return BlockType.UNORDERED_LIST
+    if len(re.findall(r"^1\.\s", block)):
+        i = 1
+        for line in block.split("\n"):
+            if not re.findall(f"{i}. ", block):
+                return BlockType.PARAGRAPH
+            i += 1
+        return BlockType.ORDERED_LIST
+    return BlockType.PARAGRAPH
+
+def text_to_children(text):
+    text_nodes = text_to_textnodes(text)
+    children = []
+    for node in text_nodes:
+        children.append(text_node_to_html_node(node))
+    return children
+
+def markdown_to_html_node(markdown):
+    html_root = ParentNode("div", [])
+    blocks = markdown_to_blocks(markdown)
+    for block in blocks:
+        bt = block_to_block_type(block)
+        match bt:
+            case BlockType.PARAGRAPH:
+                children = text_to_children(block)
+                child = ParentNode("p", children)
+            case BlockType.CODE:
+                text = block.strip("```").lstrip()
+                node = TextNode(text,TextType.CODE)
+                children = text_node_to_html_node(node)
+                child = ParentNode("pre", [children])
+            case BlockType.QUOTE:
+                lines = block.replace(">", "").split("\n")
+                lines = map(lambda x: x.lstrip(), lines)
+                text = "\n".join(lines)
+                children = text_to_children(text)
+                child = ParentNode("blockquote", children)
+            case BlockType.HEADING:
+                n = 0
+                text = block
+                while text.startswith("#"):
+                    text = text.removeprefix("#")
+                    n += 1
+                text = text.lstrip()
+                children = text_to_children(text)
+                child = ParentNode(f"h{n}", children)
+            case BlockType.UNORDERED_LIST:
+                lines = block.split("\n")
+                children = []
+                for line in lines:
+                    line = line.removeprefix("- ")
+                    inner_children = text_to_children(line)
+                    children.append(ParentNode("li", inner_children))
+                child = ParentNode("ul", children)
+            case BlockType.ORDERED_LIST:
+                lines = block.split("\n")
+                children = []
+                for line in lines:
+                    line = line[line.find(".") + 2 : ]
+                    inner_children = text_to_children(line)
+                    children.append(ParentNode("li", inner_children))
+                child = ParentNode("ol", children)
+            case _:
+                raise Exception("Unrecognized BlockType")
+        html_root.children.append(child)
+    return html_root
+        
