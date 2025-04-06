@@ -1,6 +1,6 @@
 from textnode import *
 from md_utils import *
-from os import path, listdir, mkdir
+from os import path, listdir, mkdir, makedirs
 from shutil import copy, rmtree
 
 def cleanup_public(public):
@@ -64,17 +64,13 @@ def generate_page(from_path, template_path, dest_path):
         raise Exception(f"{from_path} doesn't exist or is not a file")
     if not path.exists(template_path) or not path.isfile(template_path):
         raise Exception(f"{template_path} doesn't exist or is not a file")
-    if not path.exists(dest_path) or not path.isfile(dest_path):
-        try:
-            print(f"{dest_path} not found, attempting to create it")
-            out = open(dest_path, "x")
-        except Exception as e:
-            raise Exception(f"{dest_path} doesn't exist or is not a file: {e}")
-    else:
-        try:
-            out = open(dest_path, "w")
-        except Exception as e:
-            raise Exception(f"Failed to opend {dest_path} to write")
+    dest_dir = path.dirname(dest_path)
+    if not path.exists(dest_dir):
+        makedirs(dest_dir)
+    try:
+        out = open(dest_path, "w")
+    except Exception as e:
+        raise Exception(f"Failed to opend {dest_path} to write")
     try:
         md = open(from_path).read()
     except Exception as e:
@@ -89,7 +85,16 @@ def generate_page(from_path, template_path, dest_path):
     out.write(result)
     out.close()
 
-
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    for file in listdir(dir_path_content):
+        full_path = path.join(dir_path_content, file)
+        if path.isfile(full_path) and file.endswith(".md"):
+            outfile = file.replace(".md", ".html")
+            dest_path = path.join(dest_dir_path, outfile)
+            generate_page(full_path, template_path, dest_path)
+        elif path.isdir(full_path):
+            out_dir = path.join(dest_dir_path, file)
+            generate_pages_recursive(full_path, template_path, out_dir)
     
 
     
@@ -97,6 +102,6 @@ def generate_page(from_path, template_path, dest_path):
 
 def main():
     copy_static_to_public()
-    generate_page("content/index.md", "template.html", "public/index.html")
-
+    generate_pages_recursive("content", "template.html", "public")
+        
 main()
