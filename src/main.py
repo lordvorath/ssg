@@ -2,6 +2,7 @@ from textnode import *
 from md_utils import *
 from os import path, listdir, mkdir, makedirs
 from shutil import copy, rmtree
+import sys
 
 def cleanup_public(public):
     if path.exists(public):
@@ -16,18 +17,18 @@ def cleanup_public(public):
         print(f"Failed to create {public}: {e}")
 
 def copy_static_to_public():
-    if path.exists("./static"):
-        static = "./static"
-    elif path.exists("../static"):
-        static = "../static"
+    if path.exists(f"./static"):
+        static = f"./static"
+    elif path.exists(f"../static"):
+        static = f"../static"
     else:
-        raise Exception("static directory not found")
-    if path.exists("./public"):
-        public = "./public"
-    elif path.exists("../public"):
-        public = "../public"
+        raise Exception(f"static directory not found")
+    if path.exists(f"./public"):
+        public = f"./public"
+    elif path.exists(f"../public"):
+        public = f"../public"
     else:
-        raise Exception("public directory not found")
+        raise Exception(f"public directory not found")
     cleanup_public(public)
     copy_dir_to(static, public)
 
@@ -82,10 +83,14 @@ def generate_page(from_path, template_path, dest_path):
     html = markdown_to_html_node(md).to_html()
     h1 = extract_title(md)
     result = template.replace(r"{{ Title }}", h1).replace(r"{{ Content }}", html)
+    result = result.replace("href=\"/", f"href=\"{basepath}")
+    result = result.replace("src=\"/", f"src=\"{basepath}")
     out.write(result)
     out.close()
 
 def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    if not path.exists(dir_path_content):
+        makedirs(dir_path_content)
     for file in listdir(dir_path_content):
         full_path = path.join(dir_path_content, file)
         if path.isfile(full_path) and file.endswith(".md"):
@@ -101,7 +106,16 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
 
 
 def main():
+    global basepath
+    if len(sys.argv) > 1:
+        basepath = sys.argv[1]
+    else:
+        basepath = "/"
+        print("asdkfjhasldkfhalsfh")
     copy_static_to_public()
-    generate_pages_recursive("content", "template.html", "public")
+    content = f"content"
+    template = f"template.html"
+    public = f"docs"
+    generate_pages_recursive(content, template, public)
         
 main()
