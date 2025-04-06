@@ -23,14 +23,14 @@ def copy_static_to_public():
         static = f"../static"
     else:
         raise Exception(f"static directory not found")
-    if path.exists(f"./public"):
-        public = f"./public"
-    elif path.exists(f"../public"):
-        public = f"../public"
+    if path.exists(f"./docs"):
+        docs = f"./docs"
+    elif path.exists(f"../docs"):
+        docs = f"../docs"
     else:
-        raise Exception(f"public directory not found")
-    cleanup_public(public)
-    copy_dir_to(static, public)
+        raise Exception(f"docs directory not found")
+    cleanup_public(docs)
+    copy_dir_to(static, docs)
 
 def copy_dir_to(dir, to):
     if not path.exists(dir):
